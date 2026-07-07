@@ -257,11 +257,10 @@ This project is licensed under the MIT License.
 **Harsh Chaurasia**
 
 GitHub:
-https://github.com/YOUR_USERNAME
+https://github.com/84yaHarsh
 
 LinkedIn:
-https://linkedin.com/in/YOUR_LINKEDIN
-
+https://www.linkedin.com/in/84yaharsh/
 ---
 
 ⭐ If you found this project helpful, consider giving it a star!
