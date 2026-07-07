@@ -55,8 +55,16 @@ const Footer = () => (
 export const AppLayout = () => {
   return (
     <div className="min-h-screen flex flex-col bg-dark-900 text-white selection:bg-primary-500/30">
+      {/* Visually hidden until focused: lets keyboard users jump straight to
+          the page content instead of tabbing through the whole navbar. */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary-500 focus:text-white"
+      >
+        Skip to main content
+      </a>
       <Navbar />
-      <main className="flex-1 pt-16 flex flex-col">
+      <main id="main-content" className="flex-1 pt-16 flex flex-col">
         <Outlet />
       </main>
       <Footer />

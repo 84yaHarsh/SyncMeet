@@ -6,18 +6,43 @@ export const useMediaStream = () => {
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [selectedVideoDeviceId, setSelectedVideoDeviceId] = useState(null);
+  const [selectedAudioDeviceId, setSelectedAudioDeviceId] = useState(null);
+  // Bumped whenever the active video/audio track is swapped in place (camera
+  // or mic switch) so consumers (e.g. WebRTC track replacement) can react
+  // without needing a brand-new MediaStream object identity.
+  const [activeVideoTrack, setActiveVideoTrack] = useState(null);
+  const [activeAudioTrack, setActiveAudioTrack] = useState(null);
+  const [isSwitchingDevice, setIsSwitchingDevice] = useState(false);
+
   const streamRef = useRef(null);
   const screenStreamRef = useRef(null);
 
-  const initStream = useCallback(async (videoConstraints = true, audioConstraints = true) => {
+  const initStream = useCallback(async (videoDeviceId = null, audioDeviceId = null) => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: videoConstraints ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false,
-        audio: audioConstraints ? { echoCancellation: true, noiseSuppression: true } : false
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          ...(videoDeviceId ? { deviceId: { exact: videoDeviceId } } : {}),
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          ...(audioDeviceId ? { deviceId: { exact: audioDeviceId } } : {}),
+        },
       });
       streamRef.current = mediaStream;
       setStream(mediaStream);
+      setActiveVideoTrack(mediaStream.getVideoTracks()[0] || null);
+      setActiveAudioTrack(mediaStream.getAudioTracks()[0] || null);
       setError(null);
+
+      const videoTrack = mediaStream.getVideoTracks()[0];
+      const audioTrack = mediaStream.getAudioTracks()[0];
+      if (videoTrack) setSelectedVideoDeviceId(videoTrack.getSettings().deviceId || null);
+      if (audioTrack) setSelectedAudioDeviceId(audioTrack.getSettings().deviceId || null);
+
       return mediaStream;
     } catch (err) {
       console.error('Media error:', err);
@@ -25,6 +50,63 @@ export const useMediaStream = () => {
       return null;
     }
   }, []);
+
+  // Swaps the active camera in place (same MediaStream object identity is
+  // preserved) so any WebRTC senders bound to that stream stay valid — only
+  // the track itself is replaced.
+  const switchCamera = useCallback(async (deviceId) => {
+    if (!streamRef.current || !deviceId || deviceId === selectedVideoDeviceId) return;
+    setIsSwitchingDevice(true);
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
+      const newTrack = newStream.getVideoTracks()[0];
+      const oldTrack = streamRef.current.getVideoTracks()[0];
+
+      if (oldTrack) {
+        streamRef.current.removeTrack(oldTrack);
+        oldTrack.stop();
+      }
+      streamRef.current.addTrack(newTrack);
+      newTrack.enabled = isVideoEnabled;
+
+      setActiveVideoTrack(newTrack);
+      setSelectedVideoDeviceId(deviceId);
+    } catch (err) {
+      console.error('Failed to switch camera:', err);
+      setError(err.name);
+    } finally {
+      setIsSwitchingDevice(false);
+    }
+  }, [selectedVideoDeviceId, isVideoEnabled]);
+
+  const switchMicrophone = useCallback(async (deviceId) => {
+    if (!streamRef.current || !deviceId || deviceId === selectedAudioDeviceId) return;
+    setIsSwitchingDevice(true);
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: { exact: deviceId }, echoCancellation: true, noiseSuppression: true },
+      });
+      const newTrack = newStream.getAudioTracks()[0];
+      const oldTrack = streamRef.current.getAudioTracks()[0];
+
+      if (oldTrack) {
+        streamRef.current.removeTrack(oldTrack);
+        oldTrack.stop();
+      }
+      streamRef.current.addTrack(newTrack);
+      newTrack.enabled = isAudioEnabled;
+
+      setActiveAudioTrack(newTrack);
+      setSelectedAudioDeviceId(deviceId);
+    } catch (err) {
+      console.error('Failed to switch microphone:', err);
+      setError(err.name);
+    } finally {
+      setIsSwitchingDevice(false);
+    }
+  }, [selectedAudioDeviceId, isAudioEnabled]);
 
   const toggleAudio = useCallback(() => {
     if (streamRef.current) {
@@ -52,6 +134,14 @@ export const useMediaStream = () => {
     streamRef.current = null;
     screenStreamRef.current = null;
     setStream(null);
+    setActiveVideoTrack(null);
+    setActiveAudioTrack(null);
+  }, []);
+
+  const stopScreenShare = useCallback(() => {
+    screenStreamRef.current?.getTracks().forEach(track => track.stop());
+    screenStreamRef.current = null;
+    setIsScreenSharing(false);
   }, []);
 
   const startScreenShare = useCallback(async () => {
@@ -76,13 +166,7 @@ export const useMediaStream = () => {
       }
       return null;
     }
-  }, []);
-
-  const stopScreenShare = useCallback(() => {
-    screenStreamRef.current?.getTracks().forEach(track => track.stop());
-    screenStreamRef.current = null;
-    setIsScreenSharing(false);
-  }, []);
+  }, [stopScreenShare]);
 
   useEffect(() => {
     return () => {
@@ -96,7 +180,14 @@ export const useMediaStream = () => {
     isAudioEnabled,
     isVideoEnabled,
     isScreenSharing,
+    isSwitchingDevice,
+    selectedVideoDeviceId,
+    selectedAudioDeviceId,
+    activeVideoTrack,
+    activeAudioTrack,
     initStream,
+    switchCamera,
+    switchMicrophone,
     toggleAudio,
     toggleVideo,
     stopStream,

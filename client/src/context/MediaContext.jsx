@@ -40,6 +40,13 @@ export const MediaProvider = ({ children }) => {
     }
   }, [media.stream]);
 
+  // Re-enumerate after a device switch too, in case switching revealed new labels
+  useEffect(() => {
+    if (media.activeVideoTrack || media.activeAudioTrack) {
+      enumerateDevices();
+    }
+  }, [media.activeVideoTrack, media.activeAudioTrack]);
+
   return (
     <MediaContext.Provider value={{ ...media, devices, enumerateDevices }}>
       {children}

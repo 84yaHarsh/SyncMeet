@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../utils/helpers';
 import { Button } from './Button';
@@ -11,6 +11,10 @@ export const Modal = ({
   className,
   maxWidth = 'max-w-md',
 }) => {
+  const titleId = useId();
+  const closeButtonRef = useRef(null);
+  const previouslyFocusedRef = useRef(null);
+
   // Prevent scrolling when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -36,6 +40,19 @@ export const Modal = ({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
+  // Basic focus management: move focus into the dialog on open (so
+  // keyboard/screen-reader users land somewhere useful instead of staying
+  // on a now-hidden trigger), and restore it to whatever was focused before
+  // the dialog opened once it closes.
+  useEffect(() => {
+    if (isOpen) {
+      previouslyFocusedRef.current = document.activeElement;
+      closeButtonRef.current?.focus();
+    } else if (previouslyFocusedRef.current instanceof HTMLElement) {
+      previouslyFocusedRef.current.focus();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -56,14 +73,17 @@ export const Modal = ({
         )}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={titleId}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-white">{title}</h2>
+          <h2 id={titleId} className="text-xl font-semibold text-white">{title}</h2>
           <Button 
+            ref={closeButtonRef}
             variant="ghost" 
             size="icon" 
             onClick={onClose} 
             className="rounded-full text-gray-400 hover:text-white"
+            aria-label="Close dialog"
           >
             <X size={20} />
           </Button>

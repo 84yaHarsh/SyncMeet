@@ -3,10 +3,11 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '../../utils/helpers';
 
 const variants = {
-  primary: 'bg-primary-600 text-white hover:bg-primary-500 shadow-lg shadow-primary-500/30',
+  primary: 'bg-gradient-to-br from-primary-500 to-primary-700 text-white hover:from-primary-400 hover:to-primary-600 shadow-lg shadow-primary-500/30',
   secondary: 'bg-dark-700 text-white hover:bg-dark-600 border border-dark-600',
   ghost: 'bg-transparent text-gray-300 hover:text-white hover:bg-dark-800',
-  danger: 'bg-accent text-white hover:bg-rose-500 shadow-lg shadow-accent/30',
+  danger: 'bg-gradient-to-br from-accent to-rose-600 text-white hover:from-rose-400 hover:to-rose-600 shadow-lg shadow-accent/30',
+  success: 'bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-500/30',
 };
 
 const sizes = {
@@ -30,16 +31,17 @@ export const Button = React.forwardRef(({
       ref={ref}
       disabled={isLoading || disabled}
       className={cn(
-        'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2 focus:ring-offset-dark-900',
-        'disabled:opacity-50 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200 ease-out',
+        'hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-900',
+        'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:active:scale-100',
         variants[variant],
         sizes[size],
         className
       )}
       {...props}
     >
-      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
       {children}
     </button>
   );

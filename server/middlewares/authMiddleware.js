@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const config = require('../config/env');
 
 const requireAuth = (req, res, next) => {
   try {
@@ -8,8 +9,8 @@ const requireAuth = (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_for_dev');
+
+    const decoded = jwt.verify(token, config.JWT_SECRET);
     req.user = decoded;
     
     next();

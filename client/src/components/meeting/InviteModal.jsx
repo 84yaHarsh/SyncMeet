@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Copy, Check, Users } from 'lucide-react';
 import { Modal, Button, Input } from '../ui';
 
-export const InviteModal = ({ isOpen, onClose, meetingId }) => {
+export const InviteModal = React.memo(({ isOpen, onClose, meetingId }) => {
   const [copied, setCopied] = useState(false);
   const link = `${window.location.origin}/meeting/${meetingId}`;
 
-  const handleCopy = async () => {
+  const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
@@ -14,7 +14,7 @@ export const InviteModal = ({ isOpen, onClose, meetingId }) => {
     } catch (err) {
       console.error('Failed to copy', err);
     }
-  };
+  }, [link]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Add others">
@@ -30,15 +30,17 @@ export const InviteModal = ({ isOpen, onClose, meetingId }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-2">Meeting Link</label>
+          <label htmlFor="invite-link" className="block text-sm font-medium text-gray-400 mb-2">Meeting Link</label>
           <div className="flex gap-2">
             <Input 
+              id="invite-link"
               readOnly 
               value={link}
               className="flex-1 font-mono text-sm"
               onFocus={(e) => e.target.select()}
+              aria-label="Meeting invite link"
             />
-            <Button variant={copied ? "success" : "primary"} onClick={handleCopy} className="min-w-[100px]">
+            <Button variant={copied ? "success" : "primary"} onClick={handleCopy} className="min-w-[100px]" aria-label="Copy meeting link">
               {copied ? (
                 <>
                   <Check size={18} className="mr-2" />
@@ -56,4 +58,6 @@ export const InviteModal = ({ isOpen, onClose, meetingId }) => {
       </div>
     </Modal>
   );
-};
+});
+
+InviteModal.displayName = 'InviteModal';

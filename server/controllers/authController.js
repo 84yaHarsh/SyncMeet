@@ -1,7 +1,8 @@
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
+const config = require('../config/env');
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client(config.GOOGLE_CLIENT_ID);
 
 const googleLogin = async (req, res) => {
   try {
@@ -14,7 +15,7 @@ const googleLogin = async (req, res) => {
     // Verify the Google ID token
     const ticket = await client.verifyIdToken({
       idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: config.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
@@ -29,7 +30,7 @@ const googleLogin = async (req, res) => {
     // Issue JWT for the application
     const appToken = jwt.sign(
       { googleId, email, name, picture },
-      process.env.JWT_SECRET || 'fallback_secret_for_dev',
+      config.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
