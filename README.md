@@ -28,8 +28,8 @@
 > Add screenshots after deployment.
 
 ### Landing Page
-
-![Landing](./screenshots/landing.png)
+ 
+ ![Landing](./screenshots/landing.png)
 
 ### Dashboard
 
