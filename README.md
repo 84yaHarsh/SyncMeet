@@ -25,7 +25,7 @@
 
 ## 📸 Screenshots
 
-> Add screenshots after deployment.
+
 
 ### Landing Page
  
